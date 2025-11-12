@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <title>Mapa de Crimes</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    html, body, #map {
+      height: 100%;
+      margin: 0;
+      font-family: "Roboto", sans-serif;
+    }
+
+    .map-controls {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 1000;
+    }
+
+    button, .search-box {
+      background: white;
+      border: 1px solid #ccc;
+      padding: 8px 12px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    button:hover, .search-box:hover {
+      background: #f5f5f5;
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .search-box input {
+      border: none;
+      outline: none;
+      width: 150px;
+      font-size: 14px;
+    }
+
+    #github {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #24292e;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      z-index: 1000;
+    }
+
+    #github:hover {
+      background: #444;
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <div class="map-controls">
+    <button id="btnMap">Mapa</button>
+    <button id="btnSat">Satélite</button>
+    <div class="search-box">
+      <input type="text" id="search" placeholder="Pesquisar local..." />
+      <button id="btnSearch">🔍</button>
+    </div>
+  </div>
+
+  <button
+    id="github"
+    onclick="window.open('https://github.com/SEU_USUARIO', '_blank')"
+  >
+    GitHub
+  </button>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+ 
+    const map = L.map('map').setView([-22.9, -43.2], 11);
+
+
+    const normalLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    const satLayer = L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      {
+        maxZoom: 19,
+        attribution: '© Esri'
+      }
+    );
+
+   
+    document.getElementById("btnSat").onclick = () => {
+      if (map.hasLayer(normalLayer)) {
+        map.removeLayer(normalLayer);
+        satLayer.addTo(map);
+      }
+    };
+
+    document.getElementById("btnMap").onclick = () => {
+      if (map.hasLayer(satLayer)) {
+        map.removeLayer(satLayer);
+        normalLayer.addTo(map);
+      }
+    };
+
+
+    document.getElementById("btnSearch").onclick = () => {
+      const q = document.getElementById("search").value.trim();
+      if (!q) return;
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.length > 0) {
+            const { lat, lon } = data[0];
+            map.setView([lat, lon], 14);
+            
+          } else {
+            alert("Local não encontrado!");
+          }
+        })
+        .catch(err => console.error("Erro na pesquisa:", err));
+    };
+
+
+    async function carregarCrimes() {
+      try {
+        const response = await fetch('/api/crimes');
+        const crimes = await response.json();
+
+        crimes.forEach(c => {
+          if (c.latitude && c.longitude) {
+            let circle = L.circle([c.latitude, c.longitude], {
+              color: 'red',
+              fillColor: '#f03',
+              fillOpacity: 0.5,
+              radius: 150
+            })
+            .bindPopup(`
+              <b>Tipo:</b> ${c.type}<br>
+              <b>Descrição:</b> ${c.description}<br>
+              <b>Bairro:</b> ${c.bairro}<br>
+              <b>Data:</b> ${new Date(c.data).toLocaleString('pt-BR')}
+              <button onclick="window.open('', '_blank')">Reportar via WhatsApp</button>
+            `)
+            .addTo(map);
+            circle.on('dbclick', () => {
+            
+            });
+          }
+          
+        });
+      } catch (err) {
+        console.error('Erro ao carregar crimes:', err);
+      }
+    }
+
+    carregarCrimes();
+  </script>
+</body>
+</html>
