@@ -9,6 +9,10 @@ app.use(express.static('public'));
 app.get('/api/crimes', async (req, res) => {
   try {
 
+
+
+    const ocorrenciasResp = (await fetch('crimes.json'));
+
     if (!ocorrenciasResp.ok) {
       const txt = await ocorrenciasResp.text();
       throw new Error('Erro ao buscar ocorrências: ' + txt);
