@@ -11,7 +11,7 @@ app.get('/api/crimes', async (req, res) => {
 
 
 
-    const ocorrenciasResp = (await fetch('crimes.json'));
+    const ocorrenciasResp = (await fetch('../json/crimes.json'));
 
     if (!ocorrenciasResp.ok) {
       const txt = await ocorrenciasResp.text();
