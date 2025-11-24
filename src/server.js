@@ -21,6 +21,6 @@ app.get('/api/crimes', async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: 'Erro ao carregar crimes: ' + err.message });
   }
-});
-
+})
 app.listen(PORT, () => console.log(`Servidor rodando em: http://localhost:${PORT}`));
+#adicionar um thortle aqui e um verificar de forwaded e csp
